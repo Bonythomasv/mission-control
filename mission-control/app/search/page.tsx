@@ -41,6 +41,13 @@ export default function SearchPage() {
     return () => clearTimeout(timer);
   }, [query]);
 
+  // Get all items when no search query
+  const allActivities = useQuery(api.activities.getRecentActivities, { limit: 50 });
+  const allTasks = useQuery(api.scheduledTasks.getUpcomingTasks, { limit: 50 });
+  const allMemories = useQuery(api.search.getMemories, { limit: 50 });
+  const allDocuments = useQuery(api.search.getDocuments, { limit: 50 });
+  
+  // Search results (only when query >= 2 chars)
   const searchResults = useQuery(
     api.search.searchAll,
     debouncedQuery.length >= 2 ? { query: debouncedQuery } : "skip"
@@ -63,39 +70,43 @@ export default function SearchPage() {
     );
   };
 
-  const filteredResults = useMemo(() => {
-    if (!searchResults) return null;
-    if (activeFilters.length === 0) return searchResults;
-
+  // Combine results - either from search or show all
+  const displayResults = useMemo(() => {
+    // If searching, use search results
+    if (debouncedQuery.length >= 2 && searchResults) {
+      if (activeFilters.length === 0) return searchResults;
+      return {
+        memories: activeFilters.includes("memory") ? searchResults.memories : [],
+        documents: activeFilters.includes("document") ? searchResults.documents : [],
+        activities: activeFilters.includes("activity") ? searchResults.activities : [],
+        tasks: activeFilters.includes("task") ? searchResults.tasks : [],
+        totalCount: 0,
+      };
+    }
+    
+    // Otherwise show all recent items
     return {
-      memories: activeFilters.includes("memory")
-        ? searchResults.memories
-        : [],
-      documents: activeFilters.includes("document")
-        ? searchResults.documents
-        : [],
-      activities: activeFilters.includes("activity")
-        ? searchResults.activities
-        : [],
-      tasks: activeFilters.includes("task") ? searchResults.tasks : [],
-      totalCount: 0, // Recalculate below
+      memories: allMemories?.map(m => ({ ...m, type: "memory" })) || [],
+      documents: allDocuments?.map(d => ({ ...d, type: "document" })) || [],
+      activities: allActivities?.map(a => ({ ...a, type: "activity" })) || [],
+      tasks: allTasks?.map(t => ({ ...t, type: "task" })) || [],
+      totalCount: (allMemories?.length || 0) + (allDocuments?.length || 0) + (allActivities?.length || 0) + (allTasks?.length || 0),
     };
-  }, [searchResults, activeFilters]);
+  }, [searchResults, allMemories, allDocuments, allActivities, allTasks, activeFilters, debouncedQuery]);
 
   const allResults = useMemo(() => {
-    if (!filteredResults) return [];
+    if (!displayResults) return [];
     return [
-      ...filteredResults.memories.map((r) => ({ ...r, resultType: "memory" })),
-      ...filteredResults.documents.map((r) => ({ ...r, resultType: "document" })),
-      ...filteredResults.activities.map((r) => ({ ...r, resultType: "activity" })),
-      ...filteredResults.tasks.map((r) => ({ ...r, resultType: "task" })),
+      ...displayResults.memories.map((r: any) => ({ ...r, resultType: "memory" })),
+      ...displayResults.documents.map((r: any) => ({ ...r, resultType: "document" })),
+      ...displayResults.activities.map((r: any) => ({ ...r, resultType: "activity" })),
+      ...displayResults.tasks.map((r: any) => ({ ...r, resultType: "task" })),
     ].sort((a: any, b: any) => {
-      // Sort by recency
       const aTime = a.timestamp || a.updatedAt || a.lastModified || a.scheduledFor || 0;
       const bTime = b.timestamp || b.updatedAt || b.lastModified || b.scheduledFor || 0;
       return bTime - aTime;
     });
-  }, [filteredResults]);
+  }, [displayResults]);
 
   const clearSearch = () => {
     setQuery("");
@@ -188,15 +199,17 @@ export default function SearchPage() {
         )}
 
         {/* Results count */}
-        {searchResults && query.length >= 2 && (
+        {(query.length >= 2 || allResults.length > 0) && (
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">
-              Found <span className="font-medium text-gray-900">{allResults.length}</span> results
-              {searchResults.totalCount !== allResults.length && (
-                <span className="text-gray-400">
-                  {" "}
-                  (filtered from {searchResults.totalCount})
-                </span>
+              {query.length >= 2 ? (
+                <>
+                  Found <span className="font-medium text-gray-900">{allResults.length}</span> results
+                </>
+              ) : (
+                <>
+                  Showing <span className="font-medium text-gray-900">{allResults.length}</span> recent items
+                </>
               )}
             </p>
           </div>
@@ -307,39 +320,25 @@ export default function SearchPage() {
           </div>
         )}
 
-        {/* Initial state */}
-        {query.length < 2 && (
-          <div className="space-y-6">
-            {/* Recent searches */}
-            {searchHistory && searchHistory.length > 0 && (
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-3">Recent Searches</h3>
-                <div className="flex flex-wrap gap-2">
-                  {searchHistory.map((search) => (
-                    <button
-                      key={search._id}
-                      onClick={() => setQuery(search.query)}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm text-gray-700 transition-colors"
-                    >
-                      <Clock className="w-3 h-3" />
-                      {search.query}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+        {/* Loading state for initial data */}
+        {query.length < 2 && !allMemories && !allActivities && (
+          <div className="text-center py-12">
+            <div className="animate-spin w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full mx-auto mb-4" />
+            <p className="text-gray-500">Loading items...</p>
+          </div>
+        )}
 
-            {/* Search tips */}
-            <div className="bg-gray-50 rounded-xl p-6">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Search Tips</h3>
-              <ul className="space-y-2 text-sm text-gray-500">
-                <li>• Search for memories by content or tags</li>
-                <li>• Find documents by name or content</li>
-                <li>• Look up past activities by title or description</li>
-                <li>• Find scheduled tasks by title</li>
-                <li>• Use filters to narrow down results</li>
-              </ul>
-            </div>
+        {/* Search tips - shown below results */}
+        {query.length < 2 && allResults.length > 0 && (
+          <div className="bg-gray-50 rounded-xl p-6 mt-6">
+            <h3 className="text-sm font-medium text-gray-700 mb-3">Search Tips</h3>
+            <ul className="space-y-2 text-sm text-gray-500">
+              <li>• Type at least 2 characters to search across all items</li>
+              <li>• Search for memories by content</li>
+              <li>• Find activities by title or description</li>
+              <li>• Look up scheduled tasks</li>
+              <li>• Use filters to narrow down results</li>
+            </ul>
           </div>
         )}
       </div>
