@@ -1,0 +1,7 @@
+At line:1 char:64
++ Unregister-ScheduledTask -TaskName 'CrashDiagnostics' -Confirm:
++                                                                ~
+Parameter -Confirm: requires an argument.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : ParameterRequiresArgument
+ 
