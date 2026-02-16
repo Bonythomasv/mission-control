@@ -12,6 +12,7 @@ import {
   Clock,
   X,
   Filter,
+  RefreshCw,
 } from "lucide-react";
 import { cn, formatDateTime, getRelativeTime } from "@/lib/utils";
 
@@ -105,9 +106,18 @@ export default function SearchPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Global Search</h1>
-        <p className="text-gray-500">Search across memories, documents, activities, and tasks</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Global Search</h1>
+          <p className="text-gray-500">Search across memories, documents, activities, and tasks</p>
+        </div>
+        <button
+          onClick={() => window.location.reload()}
+          className="p-2 hover:bg-gray-100 rounded-lg"
+          title="Refresh"
+        >
+          <RefreshCw className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Search Bar */}

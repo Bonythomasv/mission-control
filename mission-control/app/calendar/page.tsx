@@ -20,6 +20,7 @@ import {
   Circle,
   XCircle,
   Clock,
+  RefreshCw,
 } from "lucide-react";
 import { cn, addDays as addDaysUtil } from "@/lib/utils";
 
@@ -53,6 +54,14 @@ export default function CalendarPage() {
 
   const completeTask = useMutation(api.scheduledTasks.completeTask);
   const updateTask = useMutation(api.scheduledTasks.updateTask);
+  const createTask = useMutation(api.scheduledTasks.createTask);
+
+  const [newTask, setNewTask] = useState({
+    title: "",
+    description: "",
+    scheduledFor: new Date().setHours(9, 0, 0, 0),
+    priority: "medium" as "low" | "medium" | "high",
+  });
 
   const weekDays = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -98,6 +107,13 @@ export default function CalendarPage() {
             className="p-2 hover:bg-gray-100 rounded-lg"
           >
             <ChevronRight className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => window.location.reload()}
+            className="p-2 hover:bg-gray-100 rounded-lg"
+            title="Refresh"
+          >
+            <RefreshCw className="w-5 h-5" />
           </button>
           <button
             onClick={() => setShowAddModal(true)}
@@ -294,6 +310,89 @@ export default function CalendarPage() {
                 className="flex-1 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Task Modal */}
+      {showAddModal && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowAddModal(false)}
+        >
+          <div
+            className="bg-white rounded-xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Add New Task
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  value={newTask.title}
+                  onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="Task title"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={newTask.description}
+                  onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="Task description"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Priority
+                </label>
+                <select
+                  value={newTask.priority}
+                  onChange={(e) => setNewTask({ ...newTask, priority: e.target.value as "low" | "medium" | "high" })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-6">
+              <button
+                onClick={async () => {
+                  if (newTask.title.trim()) {
+                    await createTask({
+                      title: newTask.title,
+                      description: newTask.description,
+                      scheduledFor: newTask.scheduledFor,
+                      priority: newTask.priority,
+                    });
+                    setNewTask({ title: "", description: "", scheduledFor: new Date().setHours(9, 0, 0, 0), priority: "medium" });
+                    setShowAddModal(false);
+                  }
+                }}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              >
+                <Plus className="w-4 h-4" />
+                Add Task
+              </button>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="flex-1 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
               </button>
             </div>
           </div>
