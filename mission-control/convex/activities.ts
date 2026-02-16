@@ -99,23 +99,12 @@ export const getActivityStats = query({
 
 export const createActivity = mutation({
   args: {
-    type: v.union(
-      v.literal("task_completed"),
-      v.literal("task_created"),
-      v.literal("file_created"),
-      v.literal("file_modified"),
-      v.literal("command_executed"),
-      v.literal("message_sent"),
-      v.literal("search_performed"),
-      v.literal("cron_scheduled"),
-      v.literal("cron_completed"),
-      v.literal("note_added")
-    ),
+    type: v.string(),
     title: v.string(),
     description: v.optional(v.string()),
     category: v.optional(v.string()),
     metadata: v.optional(v.record(v.string(), v.any())),
-    status: v.optional(v.union(v.literal("success"), v.literal("failed"), v.literal("pending"))),
+    status: v.optional(v.string()),
     duration: v.optional(v.number()),
     sessionKey: v.optional(v.string()),
   },
@@ -130,7 +119,7 @@ export const createActivity = mutation({
 export const updateActivityStatus = mutation({
   args: {
     id: v.id("activities"),
-    status: v.union(v.literal("success"), v.literal("failed"), v.literal("pending")),
+    status: v.string(),
   },
   handler: async (ctx, args) => {
     return await ctx.db.patch(args.id, { status: args.status });

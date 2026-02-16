@@ -109,7 +109,7 @@ export const getMemories = query({
 export const createMemory = mutation({
   args: {
     content: v.string(),
-    type: v.union(v.literal("note"), v.literal("decision"), v.literal("fact"), v.literal("preference")),
+    type: v.string(),
     category: v.optional(v.string()),
     source: v.optional(v.string()),
     importance: v.optional(v.number()),
@@ -173,7 +173,7 @@ export const createOrUpdateDocument = mutation({
     path: v.string(),
     name: v.string(),
     content: v.string(),
-    type: v.union(v.literal("markdown"), v.literal("code"), v.literal("config"), v.literal("other")),
+    type: v.string(),
     size: v.optional(v.number()),
   },
   handler: async (ctx, args) => {

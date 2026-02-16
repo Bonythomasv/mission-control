@@ -117,14 +117,9 @@ export const createTask = mutation({
     title: v.string(),
     description: v.optional(v.string()),
     scheduledFor: v.number(),
-    recurrence: v.optional(v.union(
-      v.literal("daily"),
-      v.literal("weekly"),
-      v.literal("monthly"),
-      v.literal("once")
-    )),
+    recurrence: v.optional(v.string()),
     category: v.optional(v.string()),
-    priority: v.optional(v.union(v.literal("low"), v.literal("medium"), v.literal("high"))),
+    priority: v.optional(v.string()),
     source: v.optional(v.string()),
     metadata: v.optional(v.record(v.string(), v.any())),
   },
@@ -144,9 +139,9 @@ export const updateTask = mutation({
     title: v.optional(v.string()),
     description: v.optional(v.string()),
     scheduledFor: v.optional(v.number()),
-    status: v.optional(v.union(v.literal("pending"), v.literal("completed"), v.literal("cancelled"))),
+    status: v.optional(v.string()),
     category: v.optional(v.string()),
-    priority: v.optional(v.union(v.literal("low"), v.literal("medium"), v.literal("high"))),
+    priority: v.optional(v.string()),
     metadata: v.optional(v.record(v.string(), v.any())),
   },
   handler: async (ctx, args) => {

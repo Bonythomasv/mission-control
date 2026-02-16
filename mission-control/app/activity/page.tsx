@@ -16,6 +16,7 @@ import {
   Activity,
   Filter,
   RefreshCw,
+  Plus,
 } from "lucide-react";
 
 const activityIcons: Record<string, React.ElementType> = {
@@ -53,6 +54,7 @@ export default function ActivityPage() {
     filter !== "all" ? { type: filter, limit: 100 } : { limit: 100 }
   );
   const stats = useQuery(api.activities.getActivityStats);
+  const createActivity = useMutation(api.activities.createActivity);
 
   const filteredActivities = activities?.filter((a) =>
     category ? a.category === category : true
@@ -70,9 +72,29 @@ export default function ActivityPage() {
           <h1 className="text-2xl font-bold text-gray-900">Activity Feed</h1>
           <p className="text-gray-500">Every action and task completed</p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <RefreshCw className="w-4 h-4" />
-          <span>Real-time updates</span>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={async () => {
+              await createActivity({
+                type: "note_added",
+                title: "Test activity " + new Date().toLocaleTimeString(),
+                description: "Created from Mission Control",
+                category: "test",
+                status: "success",
+              });
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Activity</span>
+          </button>
+          <button 
+            onClick={() => window.location.reload()}
+            className="flex items-center gap-2 text-sm text-gray-500 hover:text-primary-600 transition-colors px-3 py-1.5"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span>Refresh</span>
+          </button>
         </div>
       </div>
 
