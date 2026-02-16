@@ -10,38 +10,46 @@ export const searchAll = query({
   },
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
+    const query = args.query.toLowerCase();
     
-    // Search memories
-    const memories = await ctx.db
+    // Search memories (by content)
+    const allMemories = await ctx.db
       .query("memories")
-      .withSearchIndex("search_content", (q) => q.search("content", args.query))
-      .take(limit);
+      .order("desc")
+      .take(100);
+    const memories = allMemories.filter(m => 
+      m.content.toLowerCase().includes(query)
+    ).slice(0, limit);
     
-    // Search documents
-    const documents = await ctx.db
+    // Search documents (by name or content)
+    const allDocuments = await ctx.db
       .query("documents")
-      .withSearchIndex("search_content", (q) => q.search("content", args.query))
-      .take(limit);
+      .order("desc")
+      .take(100);
+    const documents = allDocuments.filter(d => 
+      d.name.toLowerCase().includes(query) || 
+      d.content.toLowerCase().includes(query)
+    ).slice(0, limit);
     
     // Search activities (by title/description)
-    const activities = await ctx.db
+    const allActivities = await ctx.db
       .query("activities")
-      .filter((q) => q.or(
-        q.contains(q.field("title"), args.query),
-        q.contains(q.field("description"), args.query)
-      ))
       .order("desc")
-      .take(limit);
+      .take(100);
+    const activities = allActivities.filter(a => 
+      a.title.toLowerCase().includes(query) || 
+      (a.description && a.description.toLowerCase().includes(query))
+    ).slice(0, limit);
     
-    // Search scheduled tasks
-    const tasks = await ctx.db
+    // Search scheduled tasks (by title/description)
+    const allTasks = await ctx.db
       .query("scheduledTasks")
-      .filter((q) => q.or(
-        q.contains(q.field("title"), args.query),
-        q.contains(q.field("description"), args.query)
-      ))
       .order("desc")
-      .take(limit);
+      .take(100);
+    const tasks = allTasks.filter(t => 
+      t.title.toLowerCase().includes(query) || 
+      (t.description && t.description.toLowerCase().includes(query))
+    ).slice(0, limit);
 
     // Record search
     await ctx.db.insert("searches", {
@@ -92,11 +100,11 @@ export const getMemories = query({
         .order("desc")
         .take(limit);
     } else if (args.category) {
-      return await ctx.db
+      const all = await ctx.db
         .query("memories")
-        .withIndex("by_category", (q) => q.eq("category", args.category))
         .order("desc")
-        .take(limit);
+        .take(100);
+      return all.filter(m => m.category === args.category).slice(0, limit);
     }
     
     return await ctx.db
