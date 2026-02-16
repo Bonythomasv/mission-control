@@ -51,13 +51,6 @@ export const searchAll = query({
       (t.description && t.description.toLowerCase().includes(query))
     ).slice(0, limit);
 
-    // Record search
-    await ctx.db.insert("searches", {
-      query: args.query,
-      resultCount: memories.length + documents.length + activities.length + tasks.length,
-      timestamp: Date.now(),
-    });
-
     return {
       memories: memories.map(m => ({ ...m, type: "memory" as const })),
       documents: documents.map(d => ({ ...d, type: "document" as const })),
@@ -65,6 +58,20 @@ export const searchAll = query({
       tasks: tasks.map(t => ({ ...t, type: "task" as const })),
       totalCount: memories.length + documents.length + activities.length + tasks.length,
     };
+  },
+});
+
+export const recordSearch = mutation({
+  args: {
+    query: v.string(),
+    resultCount: v.number(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.insert("searches", {
+      query: args.query,
+      resultCount: args.resultCount,
+      timestamp: Date.now(),
+    });
   },
 });
 
